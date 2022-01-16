@@ -1,0 +1,11 @@
+# Ensure your keys and values have a space between them
+# Example:
+# Bad:
+#   access_key:myaccess_key
+# Good:
+#   access_key: myaccess_key 
+
+
+prod:
+  access_key: 
+  secret_key: 
