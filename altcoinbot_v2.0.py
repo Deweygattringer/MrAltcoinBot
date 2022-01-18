@@ -312,7 +312,19 @@ def maxprice():
     LastPriceb = client.get_symbol_ticker(symbol='TRXUSDT')
     currentpriceb = LastPriceb['price']
     max = str(currentpriceb)
-
+    LastPricea = client.get_symbol_ticker(symbol='TRXUSDT') 
+    current = LastPricea['price']
+    currentprice_str = str(current)
+    with open('current_price.txt', 'r') as file:
+            btccurrent = file.readlines()[-1]
+            lastcurrent = btccurrent.strip('\n').strip(' ')
+            iscurrent = float(lastcurrent)
+    
+    
+    if current != iscurrent:
+        with open('current_price.txt', 'w') as filehandle:
+                for listitem in currentprice_str:
+                    filehandle.write('%s' % listitem)
    
     
     with open('maxprice.txt', 'r') as file:
@@ -338,7 +350,26 @@ def buy():
     lastpriceb = LastPricea['price']
     volume, last_price = convert_volume()
     orders = {}
+    LastPricea = client.get_symbol_ticker(symbol='TRXUSDT') 
+    current = LastPricea['price']
+    currentprice = float(current)
     
+    LastPriceb = client.get_symbol_ticker(symbol='TRXUSDT')
+    currentpriceb = LastPriceb['price']
+    max = str(currentpriceb)
+
+   
+    
+    with open('maxprice.txt', 'r') as file:
+            btcbuy = file.readlines()[-1]
+            lastb = btcbuy.strip('\n').strip(' ')
+            maxpricec = float(lastb)
+    
+    if currentprice > maxpricec * 1.001:
+    
+            with open('maxprice.txt', 'w') as filehandle:
+                for listitem in max:
+                    filehandle.write('%s' % listitem)
     
     with open('maxprice.txt', 'r') as file:
             btcbuy = file.readlines()[-1]
@@ -346,12 +377,13 @@ def buy():
             maxpricea = float(lastb)
     for coin in volume:
 
+
         
         
         
        
         # only buy if the there are no active trades on the coin
-        if coin not in coins_bought and float(lastpriceb) * 1.015 <= maxpricea :
+        if coin not in coins_bought and float(lastpriceb) * 1.012 <= maxpricea :
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
             if TEST_MODE:
@@ -487,7 +519,7 @@ def sell_coins():
 
           
 
-        if LastPrice <= (maxpricea * 0.999) and LastPrice > (BuyPrice * 1.015):
+        if LastPrice <= (maxpricea * 0.998) and LastPrice > (BuyPrice * 1.013):
 
             print(f"{txcolors.SELL_PROFIT if PriceChange >= 0. else txcolors.SELL_LOSS}Sell criteria reached, selling {coins_bought[coin]['volume']} {coin} - {BuyPrice} - {LastPrice} : {PriceChange-(TRADING_FEE*2):.2f}% Est:${(QUANTITY*(PriceChange-(TRADING_FEE*2)))/100:.2f}{txcolors.DEFAULT}")
 
