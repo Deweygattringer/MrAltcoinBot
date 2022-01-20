@@ -69,7 +69,7 @@ trading_options:
   # Trading fee in % per trade.
   # If using 0.75% (using BNB for fees) you must have BNB in your account to cover trading fees.
   # If using BNB for fees, it MUST be enabled in your Binance 'Dashboard' page (checkbox).
-  TRADING_FEE: .001
+  TRADING_FEE: .0075
   
   SIGNALLING_MODULES:
   
