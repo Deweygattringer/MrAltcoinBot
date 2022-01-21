@@ -421,7 +421,7 @@ def buy():
         
        
         # only buy if the there are no active trades on the coin
-        if (coin not in coins_bought and float(lastpriceb) > last_sell_static and float(lastpriceb) <= maxpricea * 0.999) or (coin not in coins_bought and last_sell_static > currentprice and currentprice > last_sell * 1.005) :
+        if (coin not in coins_bought and float(lastpriceb) > last_sell_static and float(lastpriceb) <= maxpricea * 0.999) or (coin not in coins_bought and last_sell_static > currentprice and currentprice > last_sell * 1.007) :
 
             if TEST_MODE:
                 orders[coin] = [{
