@@ -557,7 +557,7 @@ def sell_coins():
 
           
 
-        if LastPrice <= (maxpricea * 0.999) and LastPrice > (BuyPrice * 1.0035):
+        if LastPrice <= (maxpricea * 0.998) and LastPrice > (BuyPrice * 1.0035):
 
             print(f"{txcolors.SELL_PROFIT if PriceChange >= 0. else txcolors.SELL_LOSS}Sell criteria reached, selling {coins_bought[coin]['volume']} {coin} - {BuyPrice} - {LastPrice} : {PriceChange-(TRADING_FEE*2):.2f}% Est:${(QUANTITY*(PriceChange-(TRADING_FEE*2)))/100:.2f}{txcolors.DEFAULT}")
 
