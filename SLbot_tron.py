@@ -421,7 +421,7 @@ def buy():
         
        
         # only buy if the there are no active trades on the coin
-        if (coin not in coins_bought and float(lastpriceb) > last_sell_static and float(lastpriceb) <= maxpricea * 0.9995) or (coin not in coins_bought and last_sell_static > currentprice and currentprice > last_sell * 1.012) :
+        if (coin not in coins_bought and float(lastpriceb) > last_sell_static * 1.001 and float(lastpriceb) <= maxpricea * 0.9998) or (coin not in coins_bought and last_sell_static > currentprice and currentprice > last_sell * 1.008) :
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
             if TEST_MODE:
@@ -470,7 +470,7 @@ def buy():
                     
                     #    Log trade
                     if LOG_TRADES:
-                        write_log(f"I (pi2)just bought: {volume[coin]} {coin} @ {last_price[coin]['price']}")
+                        write_log(f"I just bought: {volume[coin]} {coin} @ {last_price[coin]['price']}")
                         
                         # reset maxprice for this buy so it will also work in more bearish trends
                         newprice = last_price[coin]['price']
@@ -557,7 +557,7 @@ def sell_coins():
 
           
 
-        if (LastPrice <= (maxpricea * 0.999) and LastPrice >= (BuyPrice * 1.0035)) or (LastPrice <= BuyPrice * 0.985 ):
+        if (LastPrice <= (maxpricea * 0.998) and LastPrice >= (BuyPrice * 1.0031)) or (LastPrice <= BuyPrice * 0.992 ):
 
             print(f"{txcolors.SELL_PROFIT if PriceChange >= 0. else txcolors.SELL_LOSS}Sell criteria reached, selling {coins_bought[coin]['volume']} {coin} - {BuyPrice} - {LastPrice} : {PriceChange-(TRADING_FEE*2):.2f}% Est:${(QUANTITY*(PriceChange-(TRADING_FEE*2)))/100:.2f}{txcolors.DEFAULT}")
 
@@ -587,7 +587,7 @@ def sell_coins():
                 # Log trade
                 if LOG_TRADES:
                     profit = ((LastPrice - BuyPrice) * coins_sold[coin]['volume'])* (1-(TRADING_FEE*2)) # adjust for trading fee here
-                    write_log(f"I (pi2)just sold: {coins_sold[coin]['volume']} {coin} @ {LastPrice} Profit: {profit:.2f} {PriceChange-(TRADING_FEE*2):.2f}%")
+                    write_log(f"I just sold: {coins_sold[coin]['volume']} {coin} @ {LastPrice} Profit: {profit:.2f} {PriceChange-(TRADING_FEE*2):.2f}%")
                     session_profit=session_profit + (PriceChange-(TRADING_FEE*2))
                     
                     #read trade log and send info to telegram bot
