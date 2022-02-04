@@ -261,7 +261,7 @@ def convert_volume():
             pass
         # new code 50% vom balance free
         free_balance = client.get_asset_balance(asset='USDT')
-        free = float(free_balance['free']) * 0.5
+        free = float(free_balance['free']) * 1
         # calculate the volume in coin from QUANTITY in USDT (default)
         volume[coin] = float(free / float(last_price[coin]['price']))
         
@@ -421,7 +421,7 @@ def buy():
         
        
         # only buy if the there are no active trades on the coin
-        if (coin not in coins_bought and float(lastpriceb) > last_sell_static * 1.001 and float(lastpriceb) <= maxpricea * 0.9998) or (coin not in coins_bought and last_sell_static > currentprice and currentprice > last_sell * 1.008) :
+        if (coin not in coins_bought and float(lastpriceb) > last_sell_static * 1.001 and float(lastpriceb) <= maxpricea * 0.9999) or (coin not in coins_bought and last_sell_static > currentprice and currentprice > last_sell * 1.015) :
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
             if TEST_MODE:
@@ -557,7 +557,7 @@ def sell_coins():
 
           
 
-        if (LastPrice <= (maxpricea * 0.998) and LastPrice >= (BuyPrice * 1.0031)) or (LastPrice <= BuyPrice * 0.992 ):
+        if (LastPrice <= (maxpricea * 0.9989) and LastPrice >= (BuyPrice * 1.0020)) or (LastPrice <= BuyPrice * 0.985 ):
 
             print(f"{txcolors.SELL_PROFIT if PriceChange >= 0. else txcolors.SELL_LOSS}Sell criteria reached, selling {coins_bought[coin]['volume']} {coin} - {BuyPrice} - {LastPrice} : {PriceChange-(TRADING_FEE*2):.2f}% Est:${(QUANTITY*(PriceChange-(TRADING_FEE*2)))/100:.2f}{txcolors.DEFAULT}")
 
