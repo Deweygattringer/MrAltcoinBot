@@ -122,14 +122,14 @@ def wait_for_price():
     coins_down = 0
     coins_unchanged = 0
 
-    pause_bot()
+    # pause_bot()
 
-    if historical_prices[hsp_head]['AAVE' + PAIR_WITH]['time'] > datetime.now() - timedelta(minutes=float(TIME_DIFFERENCE / RECHECK_INTERVAL)):
+    # if historical_prices[hsp_head]['AAVE' + PAIR_WITH]['time'] > datetime.now() - timedelta(minutes=float(TIME_DIFFERENCE / RECHECK_INTERVAL)):
 
-        # sleep for exactly the amount of time required
-        time.sleep((timedelta(minutes=float(TIME_DIFFERENCE / RECHECK_INTERVAL)) - (datetime.now() - historical_prices[hsp_head]['AAVE' + PAIR_WITH]['time'])).total_seconds())
+    #     # sleep for exactly the amount of time required
+    #     time.sleep((timedelta(minutes=float(TIME_DIFFERENCE / RECHECK_INTERVAL)) - (datetime.now() - historical_prices[hsp_head]['AAVE' + PAIR_WITH]['time'])).total_seconds())
 
-    print(f'Working...Session profit:{session_profit:.2f}% ')
+    # print(f'Working...Session profit:{session_profit:.2f}% ')
 
     # retreive latest prices
     get_price()
