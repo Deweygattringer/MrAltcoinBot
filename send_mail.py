@@ -1,4 +1,8 @@
-# LET THIS SCRIPT RUN AS CRONJOB (CRONTAB -E): 0 0 1 * *
+#!/usr/bin/python3
+# run in terminal chmod a+x /home/pi/stoploss/send_mail.py
+# LET THIS SCRIPT RUN AS CRONJOB (CRONTAB -E): 0 0 1 * * /usr/bin/python3 /home/pi/stoploss/send_mail.py >> /home/pi/stoploss/send_maillog.log 2>&1
+
+
 
 import datetime
 import smtplib
