@@ -567,9 +567,9 @@ def sell_coins():
                     with open('profits.txt', 'w') as filehandle:
                         for listitem in profits_file:
                             filehandle.write('%s' % listitem)
-                    PriceChange = float((LastPrice - BuyPrice) / BuyPrice * 100)
+                    PriceChangestr = str(PriceChange)
                     with open('pricechange.txt', 'w') as filehandle:
-                        for listitem in PriceChange:
+                        for listitem in PriceChangestr:
                             filehandle.write('%s' % listitem)
             continue
 
