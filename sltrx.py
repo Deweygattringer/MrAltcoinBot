@@ -1,50 +1,26 @@
-import csv
-# use for environment variables
+
 import os
 import math
-# use if needed to pass args to external modules
 import sys
-
 import telegram_send
-
-# used to create threads & dynamic loading of modules
 import threading
 import importlib
-
-# used for directory handling
 import glob
-
-# Needed for colorful console output Install with: python3 -m pip install colorama (Mac/Linux) or pip install colorama (PC)
 from colorama import init
 init()
-
-# needed for the binance API / websockets / Exception handling
 from binance.client import Client
 from binance.exceptions import BinanceAPIException
 from requests.exceptions import ReadTimeout, ConnectionError
-
-# used for dates
 from datetime import date, datetime, timedelta
 import time
-
-# used to repeatedly execute the code
 from itertools import count
-
-# used to store trades and sell assets
 import json
-
-# Load helper modules
 from helpers.parameters import (
     parse_args, load_config
 )
-
-# Load creds modules
 from helpers.handle_creds import (
     load_correct_creds, test_api_key
 )
-
-
-# for colourful logging to the console
 class txcolors:
     BUY = '\033[92m'
     WARNING = '\033[93m'
@@ -279,70 +255,7 @@ def convert_volume():
     return volume, last_price
 
 
- 
-# def cashout():
-#     with open('sellprice.txt', 'r') as file:
-#             btcsell = file.readlines()[-1]
-#             lasts = btcsell.strip('\n').strip(' ') 
-#             lastbtcsell = float(lasts) * 0.98
-#             return lastbtcsell
-def current():
-    
-    LastPricea = client.get_symbol_ticker(symbol='TRXUSDT') 
-    current = LastPricea['price']
-    currentprice = str(current)
-    with open('current_price.txt', 'r') as file:
-            btccurrent = file.readlines()[-1]
-            lastcurrent = btccurrent.strip('\n').strip(' ')
-            iscurrent = float(lastcurrent)
-    
-    
-    if current != iscurrent:
-        with open('current_price.txt', 'w') as filehandle:
-                for listitem in currentprice:
-                    filehandle.write('%s' % listitem)
-    return
-    
-def maxprice():
-    LastPricea = client.get_symbol_ticker(symbol='TRXUSDT') 
-    current = LastPricea['price']
-    currentprice = float(current)
-    
-    LastPriceb = client.get_symbol_ticker(symbol='TRXUSDT')
-    currentpriceb = LastPriceb['price']
-    max = str(currentpriceb)
-    LastPricea = client.get_symbol_ticker(symbol='TRXUSDT') 
-    current = LastPricea['price']
-    currentprice_str = str(current)
-    with open('current_price.txt', 'r') as file:
-            btccurrent = file.readlines()[-1]
-            lastcurrent = btccurrent.strip('\n').strip(' ')
-            iscurrent = float(lastcurrent)
-    
-    
-    if current != iscurrent:
-        with open('current_price.txt', 'w') as filehandle:
-                for listitem in currentprice_str:
-                    filehandle.write('%s' % listitem)
    
-    
-    with open('maxprice.txt', 'r') as file:
-            btcbuy = file.readlines()[-1]
-            lastb = btcbuy.strip('\n').strip(' ')
-            maxpricec = float(lastb)
-    
-    if currentprice >= maxpricec :
-    
-            with open('maxprice.txt', 'w') as filehandle:
-                for listitem in max:
-                    filehandle.write('%s' % listitem)
-    return  
-      
-    
-
-       
-        
-        
 def buy():
     '''Place Buy market orders for each volatile coin found'''
     LastPricea = client.get_symbol_ticker(symbol='TRXUSDT')
@@ -563,14 +476,6 @@ def buy():
 
 
 
-
-# def cashout_sell():
-#     with open('sellprice.txt', 'r') as file:
-#             btcsell = file.readlines()[-1]
-#             lasts = btcsell.strip('\n').strip(' ')
-#             lastbtcsell = float(lasts)
-#             return lastbtcsell
-
 def sell_coins():
     '''sell coins that have reached the STOP LOSS or TAKE PROFIT threshold'''
 
@@ -582,22 +487,12 @@ def sell_coins():
 
     for coin in list(coins_bought):
        
-        # with the new code this is to check the current highest price since buy-in and compare it to the current price and the buy-in price
-        #with open('maxprice.txt', 'r') as file:
-            # maxline = file.readlines()[-1]
-            # lastmax = maxline.strip('\n').strip(' ')
-            # current_max = float(lastmax)
-            
-            
-        #MICHL
-        
-        reset = str('0')
+    
         LastPrice = float(last_price[coin]['price'])
         BuyPrice = float(coins_bought[coin]['bought_at'])
         sell = str(LastPrice)
         PriceChange = float((LastPrice - BuyPrice) / BuyPrice * 100)
-        buyreset = str(LastPrice)
-    
+        
             
         with open('current_price.txt', 'w') as filehandle:
                 for listitem in sell:
@@ -616,15 +511,8 @@ def sell_coins():
                 for listitem in sell:
                     filehandle.write('%s' % listitem)
                 
-                          
-             
-                        
-        
-        # with open('sellprice.txt', 'w') as filehandle:
-        #     for listitem in sell:
-        #         filehandle.write('%s' % listitem)
-
-          
+  
+      
 
         if (LastPrice <= (maxpricea * 0.9996) and LastPrice >= (BuyPrice * 1.0016)) or (LastPrice <= BuyPrice * 0.991 ):
 
@@ -768,13 +656,8 @@ if __name__ == '__main__':
     TIME_DIFFERENCE = parsed_config['trading_options']['TIME_DIFFERENCE']
     RECHECK_INTERVAL = parsed_config['trading_options']['RECHECK_INTERVAL']
     CHANGE_IN_PRICE = parsed_config['trading_options']['CHANGE_IN_PRICE']
-    STOP_LOSS = parsed_config['trading_options']['STOP_LOSS']
-    TAKE_PROFIT = parsed_config['trading_options']['TAKE_PROFIT']
     CUSTOM_LIST = parsed_config['trading_options']['CUSTOM_LIST']
     TICKERS_LIST = parsed_config['trading_options']['TICKERS_LIST']
-    USE_TRAILING_STOP_LOSS = parsed_config['trading_options']['USE_TRAILING_STOP_LOSS']
-    TRAILING_STOP_LOSS = parsed_config['trading_options']['TRAILING_STOP_LOSS']
-    TRAILING_TAKE_PROFIT = parsed_config['trading_options']['TRAILING_TAKE_PROFIT']
     TRADING_FEE = parsed_config['trading_options']['TRADING_FEE']
     SIGNALLING_MODULES = parsed_config['trading_options']['SIGNALLING_MODULES']
     if DEBUG_SETTING or args.debug:
