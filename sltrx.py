@@ -338,7 +338,8 @@ def buy():
         
        
         # only buy if the there are no active trades on the coin
-        if coin not in coins_bought and price_change <= (-0.9):
+        if coin not in coins_bought and price_change <= (-0.9) and currentprice >= last_sell * 1.007:
+
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
             if TEST_MODE:
@@ -403,7 +404,7 @@ def buy():
                             telebuy = str(lastlogbuy)
                         telegram_send.send(messages=[telebuy])
                         
-        elif (coin not in coins_bought and float(lastpriceb) >= last_sell_static and maxpricea >= last_sell_static * 1.0007 and currentprice <= maxpricea and currentprice >= maxpricea * 0.9996) or (coin not in coins_bought and last_sell_static >= currentprice and currentprice >= last_sell_static * 0.99 and currentprice >= last_sell * 1.0012) or (coin not in coins_bought and currentprice <= last_sell_static * 0.99 and currentprice >= last_sell * 1.007) :
+        elif (coin not in coins_bought and price_change >= (-0.9) and float(lastpriceb) >= last_sell_static and maxpricea >= last_sell_static * 1.0007 and currentprice <= maxpricea and currentprice >= maxpricea * 0.9996) or (coin not in coins_bought and price_change >= (-0.9) and last_sell_static >= currentprice and currentprice >= last_sell_static * 0.99 and currentprice >= last_sell * 1.0012) or (coin not in coins_bought and price_change >= (-0.9) and currentprice <= last_sell_static * 0.99 and currentprice >= last_sell * 1.007) :
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
             if TEST_MODE:
@@ -566,7 +567,7 @@ def sell_coins():
                     with open('profits.txt', 'w') as filehandle:
                         for listitem in profits_file:
                             filehandle.write('%s' % listitem)
-                    
+                    PriceChange = float((LastPrice - BuyPrice) / BuyPrice * 100)
                     with open('pricechange.txt', 'w') as filehandle:
                         for listitem in PriceChange:
                             filehandle.write('%s' % listitem)
