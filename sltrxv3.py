@@ -283,7 +283,7 @@ def buy():
     free_bnb = client.get_asset_balance(asset='BNB')
     free_bnb_round = (float(free_bnb['free']))
     volume_bnb = float(0.03)
-    print(free_bnb_round)
+    print('amount bnb:', free_bnb_round)
     if free_bnb_round <= float(0.02):
         
         buy_limit = client.create_order(
@@ -293,7 +293,7 @@ def buy():
             quantity = volume_bnb
                 )
         print('bnb successfully added')
-    else: print('enough bnb in wallet')
+    else: print('enough (more than 0.02) bnb in wallet')
     
     
     '''Place Buy market orders for each volatile coin found'''
@@ -439,7 +439,7 @@ def buy():
                             lastlogbuy = logline.strip('\n').strip(' ')
                             telebuy = str(lastlogbuy)
                         telegram_send.send(messages=[telebuy])
-                        
+        # hier bei petz code f+r ersten elif fall evtl auch: wenn preis seit letztem tief 0.07 prozent gestiegen ist in letzten 5min                
         elif (coin not in coins_bought and price_change >= (-0.9) and float(lastpriceb) >= last_sell_static and currentprice >= last_sell * 1.0007) or (coin not in coins_bought and price_change >= (-0.9) and last_sell_static >= currentprice and currentprice >= last_sell_static * 0.99 and currentprice >= last_sell * 1.0012) or (coin not in coins_bought and price_change >= (-0.9) and currentprice <= last_sell_static * 0.99 and currentprice >= last_sell * 1.0055) :
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
@@ -549,7 +549,7 @@ def sell_coins():
                 
     
 
-        if (LastPrice <= (maxpricea * 0.9996) and LastPrice >= (BuyPrice * 1.0018)) or (LastPrice <= BuyPrice * 0.99 ):
+        if (LastPrice <= (maxpricea * 0.9997) and LastPrice >= (BuyPrice * 1.0018)) or (LastPrice <= BuyPrice * 0.99 ):
 
             print(f"{txcolors.SELL_PROFIT if PriceChange >= 0. else txcolors.SELL_LOSS}Sell criteria reached, selling {coins_bought[coin]['volume']} {coin} - {BuyPrice} - {LastPrice} : {PriceChange-(TRADING_FEE*2):.2f}% Est:${(QUANTITY*(PriceChange-(TRADING_FEE*2)))/100:.2f}{txcolors.DEFAULT}")
 
