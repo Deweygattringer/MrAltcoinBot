@@ -620,6 +620,10 @@ def sell_coins():
                     with open('pricechange.txt', 'w') as filehandle:
                         for listitem in PriceChangestr:
                             filehandle.write('%s' % listitem)
+                    with open('histprice.txt', 'w') as filehandle:
+                        for listitem in sell:
+                            filehandle.write('%s' % listitem)
+                    print('reloaded historical price')
             continue
 
         # no action; print once every TIME_DIFFERENCE
