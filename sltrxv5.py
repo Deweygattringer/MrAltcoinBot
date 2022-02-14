@@ -547,7 +547,7 @@ def sell_coins():
         BuyPrice = float(coins_bought[coin]['bought_at'])
         sell = str(LastPrice)
         PriceChange = float((LastPrice - BuyPrice) / BuyPrice * 100)
-        stoploss = LastPrice <= BuyPrice * 0.988
+        stoploss = LastPrice <= BuyPrice * 0.985
         level1 = (LastPrice >= BuyPrice * 1.0016 and LastPrice <= maxpricea * 0.9998)
         level2 = (LastPrice >= BuyPrice * 1.0019 and LastPrice <= maxpricea * 0.9998)
         level3 = (LastPrice >= BuyPrice * 1.0022 and LastPrice <= maxpricea * 0.9997)
