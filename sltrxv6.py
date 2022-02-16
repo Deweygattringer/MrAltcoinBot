@@ -372,10 +372,10 @@ def buy():
             
     for coin in volume:
         buyafterstoploss = coin not in coins_bought and price_change <= (-0.9) and currentprice >= last_sell * 1.0060
-        buybull = (coin not in coins_bought and price_change >= (-0.9) and currentprice >= last_sell_static and currentprice >= maxpricea * 0.995 and currentprice >= avg *1.0008 )
+        buybull = (coin not in coins_bought and price_change >= (-0.9) and currentprice >= last_sell_static and currentprice >= maxpricea * 0.995 and currentprice >= avg *1.0022 )
         buyneutral = (coin not in coins_bought and price_change >= (-0.9) and last_sell_static >= currentprice and currentprice >= last_sell_static * 0.99 and currentprice >= last_sell * 1.0012)
         buybear = (coin not in coins_bought and price_change >= (-0.9) and currentprice <= last_sell_static * 0.99 and currentprice >= last_sell * 1.0055)
-
+        buybull2 = (coin not in coins_bought and price_change >= (-0.9) and currentprice < maxpricea and currentprice >= last_sell * 1.001)
 
         # only buy if the there are no active trades on the coin
         if buyafterstoploss:
@@ -443,7 +443,7 @@ def buy():
                             telebuy = str(lastlogbuy)
                         telegram_send.send(messages=[telebuy])
         # hier bei petz code f+r ersten elif fall evtl auch: wenn preis seit letztem tief 0.07 prozent gestiegen ist in letzten 5min                
-        elif buyneutral  or buybear or buybull:
+        elif buyneutral  or buybear or buybull or buybull2:
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
             if TEST_MODE:
