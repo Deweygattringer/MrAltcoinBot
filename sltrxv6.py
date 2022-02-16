@@ -1,4 +1,3 @@
-import asyncio
 # use for environment variables
 import os
 import math
@@ -298,45 +297,29 @@ def buy():
         print('bnb successfully added')
     
     
-    #historical price 
+    #avarage prices
     historical_trx = client.get_symbol_ticker(symbol='TRXUSDT')
+    pricetrx = historical_trx['price']
     histrxprice = float(historical_trx['price'])
     hstprice = str(histrxprice)
-        
-  
-    with open('histprice.txt', 'r') as file:
-                ab = file.readlines()[-150]
-                ba = ab.strip('\n').strip(' ')
-                hist = float(ba)
-             
-            
-    if histrxprice != hist :
-        with open('histprice.txt', 'a') as filehandle:
-                filehandle.write((hstprice +'\n') )
-             
-        print(('reloaded historical price...current:  ') + hstprice )
+    price_avg = client.get_avg_price(symbol='TRXUSDT')
+    avg = float(price_avg['price'])
+    print(f'avg:   {avg}  current:   {histrxprice}')
+   
         
                 
     
     
     '''Place Buy market orders for each volatile coin found'''
-    LastPricea = client.get_symbol_ticker(symbol='TRXUSDT')
-    lastpriceb = LastPricea['price']
     volume, last_price = convert_volume()
     orders = {}
-    LastPricea = client.get_symbol_ticker(symbol='TRXUSDT') 
-    current = LastPricea['price']
+    currenttrx = client.get_symbol_ticker(symbol='TRXUSDT') 
+    current = currenttrx['price']
     currentprice = float(current)
-    #currentprice_str = str(current)
     LastPriceb = client.get_symbol_ticker(symbol='TRXUSDT')
     currentpriceb = LastPriceb['price']
     max = str(currentpriceb)
-    with open('histprice.txt', 'r') as file:
-            ab = file.readlines()[-150]
-            ba = ab.strip('\n').strip(' ')
-            hist = float(ba)
-
-   
+    
     with open('lastsell.txt', 'r') as file:
             lastline = file.readlines()[-1]
             lastsell = lastline.strip('\n').strip(' ')
@@ -389,8 +372,7 @@ def buy():
             
     for coin in volume:
         buyafterstoploss = coin not in coins_bought and price_change <= (-0.9) and currentprice >= last_sell * 1.0060
-        buybull = (coin not in coins_bought and price_change >= (-0.9) and currentprice >= last_sell_static and currentprice >= last_sell * 1.0008 and currentprice >= hist * 1.0008) 
-        buybull2 = (coin not in coins_bought and price_change >= (-0.9) and currentprice >= last_sell_static and currentprice >= maxpricea * 0.995 and currentprice >= last_sell * 1.001 )
+        buybull = (coin not in coins_bought and price_change >= (-0.9) and currentprice >= last_sell_static and currentprice >= maxpricea * 0.995 and currentprice >= avg *1.0008 )
         buyneutral = (coin not in coins_bought and price_change >= (-0.9) and last_sell_static >= currentprice and currentprice >= last_sell_static * 0.99 and currentprice >= last_sell * 1.0012)
         buybear = (coin not in coins_bought and price_change >= (-0.9) and currentprice <= last_sell_static * 0.99 and currentprice >= last_sell * 1.0055)
 
@@ -461,7 +443,7 @@ def buy():
                             telebuy = str(lastlogbuy)
                         telegram_send.send(messages=[telebuy])
         # hier bei petz code f+r ersten elif fall evtl auch: wenn preis seit letztem tief 0.07 prozent gestiegen ist in letzten 5min                
-        elif buyneutral  or buybear or buybull2:
+        elif buyneutral  or buybear or buybull:
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
             if TEST_MODE:
@@ -564,17 +546,17 @@ def sell_coins():
                 for listitem in sell:
                     filehandle.write('%s' % listitem)
         stoploss = LastPrice <= BuyPrice * 0.983
-        level1 = (LastPrice >= BuyPrice * 1.0016 and LastPrice <= maxpricea * 0.9995)
-        level2 = (LastPrice >= BuyPrice * 1.0019 and LastPrice <= maxpricea * 0.9995)
-        level3 = (LastPrice >= BuyPrice * 1.0022 and LastPrice <= maxpricea * 0.9996)
-        level4 = (LastPrice >= BuyPrice * 1.0026 and LastPrice <= maxpricea * 0.9996)
-        level5 = (LastPrice >= BuyPrice * 1.0030 and LastPrice <= maxpricea * 0.9997)
-        level6 = (LastPrice >= BuyPrice * 1.0034 and LastPrice <= maxpricea * 0.9997)
-        level7 = (LastPrice >= BuyPrice * 1.0038 and LastPrice <= maxpricea * 0.9998)
+        level1 = (LastPrice >= BuyPrice * 1.0017 and LastPrice <= maxpricea * 0.9997)
+        # level2 = (LastPrice >= BuyPrice * 1.0019 and LastPrice <= maxpricea * 0.9995)
+        # level3 = (LastPrice >= BuyPrice * 1.0022 and LastPrice <= maxpricea * 0.9996)
+        # level4 = (LastPrice >= BuyPrice * 1.0026 and LastPrice <= maxpricea * 0.9996)
+        # level5 = (LastPrice >= BuyPrice * 1.0030 and LastPrice <= maxpricea * 0.9997)
+        # level6 = (LastPrice >= BuyPrice * 1.0034 and LastPrice <= maxpricea * 0.9997)
+        # level7 = (LastPrice >= BuyPrice * 1.0038 and LastPrice <= maxpricea * 0.9998)
             
     
 
-        if level1 or level2 or level3 or level4 or level5 or level6 or level7 or stoploss:
+        if level1 or stoploss: #orlevel2 or level3 or level4 or level5 or level6 or level7 or stoploss:
 
             print(f"{txcolors.SELL_PROFIT if PriceChange >= 0. else txcolors.SELL_LOSS}Sell criteria reached, selling {coins_bought[coin]['volume']} {coin} - {BuyPrice} - {LastPrice} : {PriceChange-(TRADING_FEE*2):.2f}% Est:${(QUANTITY*(PriceChange-(TRADING_FEE*2)))/100:.2f}{txcolors.DEFAULT}")
 
@@ -769,12 +751,11 @@ if __name__ == '__main__':
         with open(coins_bought_file_path) as file:
                 coins_bought = json.load(file)
 
-    print('Press Ctrl-Q to stop the script')
 
     if not TEST_MODE:
         if not args.notimeout: # if notimeout skip this (fast for dev tests)
-            print('WARNING: You are using the Mainnet and live funds. Waiting 1 seconds as a security measure')
-            time.sleep(1)
+            print('WARNING: You are using the Mainnet and live funds.')
+            time.sleep(0)
 
     signals = glob.glob("signals/*.exs")
     for filename in signals:
