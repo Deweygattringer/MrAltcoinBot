@@ -1,4 +1,4 @@
-#v7busd
+#busdneu
 # use for environment variables
 import os
 import math
@@ -284,7 +284,7 @@ def buy():
     free_bnb = client.get_asset_balance(asset='BNB')
     free_bnb_round = (float(free_bnb['free']))
     volume_bnb = float(0.03)
-
+    xy = str(free_bnb_round)
     print('amount bnb:', free_bnb_round)
     
     if free_bnb_round <= float(0.02):
@@ -307,8 +307,6 @@ def buy():
     avg = float(price_avg['price'])
     print(f'avg:   {avg}  current:   {histrxprice}')
    
-        
-                
     
     
     '''Place Buy market orders for each volatile coin found'''
@@ -590,6 +588,7 @@ def sell_coins():
                     write_log(f"I busd just sold: {coins_sold[coin]['volume']} {coin} @ {LastPrice} Profit: {profit:.2f} {PriceChange-(TRADING_FEE*2):.2f}%")
                     session_profit=session_profit + (PriceChange-(TRADING_FEE*2))
                     
+                    profitlog(f'{profits_file}')
                     #read trade log and send info to telegram bot
                     with open('trades.txt', 'r') as file:
                         loglinesell = file.readlines()[-1]
@@ -605,11 +604,8 @@ def sell_coins():
                     with open('lastsellstatic.txt', 'w') as filehandle:
                         for listitem in sell:
                             filehandle.write('%s' % listitem)
-                    profits_file = str(f"{datetime.now()}, {coins_sold[coin]['volume']}, {BuyPrice}, {LastPrice}, {profit:.2f}, {PriceChange-(TRADING_FEE*2):.2f}'\n'")
-                    with open('profitsbusd.txt', 'w') as filehandle:
-                        for listitem in profits_file:
-                            filehandle.write('%s' % listitem)
                     PriceChangestr = str(PriceChange)
+                    profits_file = str(f"{datetime.now()}, {coins_sold[coin]['volume']}, {BuyPrice}, {LastPrice}, {profit:.2f}, {PriceChange-(TRADING_FEE*2):.2f}'\n'")
                     with open('pricechange.txt', 'w') as filehandle:
                         for listitem in PriceChangestr:
                             filehandle.write('%s' % listitem)
@@ -657,7 +653,9 @@ def remove_from_portfolio(coins_sold):
 
     with open(coins_bought_file_path, 'w') as file:
         json.dump(coins_bought, file, indent=4)
-
+def profitlog(xy):
+    with open('profitsbusd.txt', 'a+') as filehandle:
+        filehandle.write(xy + '\n')
 
 def write_log(logline):
     timestamp = datetime.now().strftime("%d/%m %H:%M:%S")
