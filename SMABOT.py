@@ -1,6 +1,8 @@
 # SMA BOT V_2
 # use for environment variables
-
+import warnings
+warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
 import pprint
 import pandas as pd     # needs pip install if not installed
 import numpy as np
@@ -127,6 +129,8 @@ def wait_for_price():
     coins_down = 0
     coins_unchanged = 0
 
+    pause_bot()
+
     if historical_prices[hsp_head]['TRX' + PAIR_WITH]['time'] > datetime.now() - timedelta(minutes=float(TIME_DIFFERENCE / RECHECK_INTERVAL)):
 
         # sleep for exactly the amount of time required
@@ -136,8 +140,54 @@ def wait_for_price():
     # retreive latest prices
     get_price()
 
+    # calculate the difference in prices
+    for coin in historical_prices[hsp_head]:
+
+        # minimum and maximum prices over time period
+        min_price = min(historical_prices, key = lambda x: float("inf") if x is None else float(x[coin]['price']))
+        max_price = max(historical_prices, key = lambda x: -1 if x is None else float(x[coin]['price']))
+
+        threshold_check = (-1.0 if min_price[coin]['time'] > max_price[coin]['time'] else 1.0) * (float(max_price[coin]['price']) - float(min_price[coin]['price'])) / float(min_price[coin]['price']) * 100
+
+        # each coin with higher gains than our CHANGE_IN_PRICE is added to the volatile_coins dict if less than MAX_COINS is not reached.
+        if threshold_check < CHANGE_IN_PRICE:
+            coins_up +=1
+
+            if coin not in volatility_cooloff:
+                volatility_cooloff[coin] = datetime.now() - timedelta(minutes=TIME_DIFFERENCE)
+
+            # only include coin as volatile if it hasn't been picked up in the last TIME_DIFFERENCE minutes already
+            if datetime.now() >= volatility_cooloff[coin] + timedelta(minutes=TIME_DIFFERENCE):
+                volatility_cooloff[coin] = datetime.now()
+
+                if len(coins_bought) + len(volatile_coins) < MAX_COINS or MAX_COINS == 0:
+                    volatile_coins[coin] = round(threshold_check, 3)
+                    print(f'{coin} has gained - {volatile_coins[coin]}% within the last {TIME_DIFFERENCE} minutes, calculating volume in {PAIR_WITH}')
+
+                else:
+                    print(f'{txcolors.WARNING}{coin} has gained - {round(threshold_check, 3)}% within the last {TIME_DIFFERENCE} minutes, but you are holding max number of coins{txcolors.DEFAULT}')
+
+        elif threshold_check > CHANGE_IN_PRICE:
+            coins_down +=1
+
+        else:
+            coins_unchanged +=1
+
    
+    # Here goes new code for external signalling
+    externals = external_signals()
+    exnumber = 0
+
+    for excoin in externals:
+        if excoin not in volatile_coins and excoin not in coins_bought and \
+                (len(coins_bought) + exnumber + len(volatile_coins)) < MAX_COINS:
+            volatile_coins[excoin] = 1
+            exnumber +=1
+            print(f'External signal received on {excoin}, calculating volume in {PAIR_WITH}')
+
     return volatile_coins, len(volatile_coins), historical_prices[hsp_head]
+
+
 
 
 def external_signals():
@@ -156,8 +206,39 @@ def external_signals():
             if DEBUG: print(f'{txcolors.WARNING}Could not remove external signalling file{txcolors.DEFAULT}')
 
     return external_list
+def pause_bot():
+    '''Pause the script when exeternal indicators detect a bearish trend in the market'''
+    global bot_paused, session_profit, hsp_head
 
+    # start counting for how long the bot's been paused
+    start_time = time.perf_counter()
 
+    while os.path.isfile("signals/paused.exc"):
+
+        if bot_paused == False:
+            print(f'{txcolors.WARNING}Pausing buying due to change in market conditions, stop loss and take profit will continue to work...{txcolors.DEFAULT}')
+            bot_paused = True
+
+        # Sell function needs to work even while paused
+        coins_sold = sell_coins()
+        remove_from_portfolio(coins_sold)
+        get_price(True)
+
+        # pausing here
+        if hsp_head == 1: print(f'Paused...Session profit:{session_profit:.2f}% Est:${(QUANTITY * session_profit)/100:.2f}')
+        time.sleep((TIME_DIFFERENCE * 60) / RECHECK_INTERVAL)
+
+    else:
+        # stop counting the pause time
+        stop_time = time.perf_counter()
+        time_elapsed = timedelta(seconds=int(stop_time-start_time))
+
+        # resume the bot and ser pause_bot to False
+        if  bot_paused == True:
+            print(f'{txcolors.WARNING}Resuming buying due to change in market conditions, total sleep time: {time_elapsed}{txcolors.DEFAULT}')
+            bot_paused = False
+
+    return
 
 
 
@@ -206,24 +287,25 @@ def convert_volume():
     
 
 def buy():
-    # IF TRADING OTHER PAIRS THAN ***/BUSD:
 
-    # # check if there is enough bnb for trading fees in wallet, if not buy some
-    # free_bnb = client.get_asset_balance(asset='BNB')
-    # free_bnb_round = (float(free_bnb['free']))
-    # volume_bnb = float(0.03)
+	# IF TRADING OTHER PAIRS THAN ***/BUSD:
 
-    # print('amount bnb:', free_bnb_round)
+   # check if there is enough bnb for trading fees in wallet, if not buy some
+    free_bnb = client.get_asset_balance(asset='BNB')
+    free_bnb_round = (float(free_bnb['free']))
+    volume_bnb = float(0.03)
+
+    print('amount bnb:', free_bnb_round)
     
-    # if free_bnb_round <= float(0.02):
+    if free_bnb_round <= float(0.02):
         
-    #     buy_limit = client.create_order(
-    #         symbol = 'BNBUSDT',
-    #         side = 'BUY',
-    #         type = 'MARKET',
-    #         quantity = volume_bnb
-    #             )
-    #     print('bnb successfully added')
+        buy_limit = client.create_order(
+            symbol = 'BNBUSDT',
+            side = 'BUY',
+            type = 'MARKET',
+            quantity = volume_bnb
+                )
+        print('bnb successfully added')
     
    
     volume, last_price = convert_volume()
@@ -235,7 +317,7 @@ def buy():
     
     symbol = 'TRXBUSD'
     starttime = '24 hours ago UTC'  # to start for 1 week ago
-    interval = '5m'
+    interval = '3m'
     bars = client.get_historical_klines(symbol, interval, starttime)
 
     for line in bars:        # Keep only first 5 columns, "date" "open" "high" "low" "close"
@@ -245,7 +327,7 @@ def buy():
     symbol_df = df
 
     # small time Moving average. calculate 5 moving average using Pandas over close price
-    symbol_df['5sma'] = symbol_df['close'].rolling(5).mean()
+    symbol_df['3sma'] = symbol_df['close'].rolling(3).mean()
     # long time moving average. calculate 15 moving average using Pandas
     symbol_df['15sma'] = symbol_df['close'].rolling(15).mean()
 
@@ -254,7 +336,7 @@ def buy():
     symbol_df.index = pd.to_datetime(symbol_df.index, unit='ms')
 
     # Calculate signal column 
-    symbol_df['Signal'] = np.where(symbol_df['5sma'] > symbol_df['15sma'], 1, 0) # ggf. hier buylogik adaptieren u.a
+    symbol_df['Signal'] = np.where(symbol_df['3sma'] > symbol_df['15sma'] * 1.0006, 1, 0) # ggf. hier buylogik adaptieren u.a
     # Calculate position column with diff
     symbol_df['Position'] = symbol_df['Signal'].diff()
     
@@ -275,13 +357,12 @@ def buy():
     signalvalue =(float(outputline[-3]))
     threesma =(float(outputline[-6]))
     fifteensma =(float(outputline[-5]))
-    print(f'SMA SIGNAL {signalvalue} \n')
-    print(f'5-SMA: {threesma} / 15-SMA: {fifteensma} / current price: {Price}')
-
+    print(f'{txcolors.WARNING}SMA SIGNAL {signalvalue} \n')
+    print(f'{txcolors.WARNING}3-SMA: {threesma} / 15-SMA: {fifteensma} / current price: {Price}')
     #PLOT GRAPHS IF WANTED:
     
     # df=df.astype(float)
-    # df[['close', '5sma','15sma']].plot()
+    # df[['close', '3sma','15sma']].plot()
     # plt.xlabel('Date',fontsize=18)
     # plt.ylabel('Close price',fontsize=18)
 
@@ -295,24 +376,24 @@ def buy():
             
     for coin in volume:
     
-        buysignal = (coin not in coins_bought and signalvalue > 0)
-        
+        buysignal = (coin not in coins_bought and float(signalvalue) == float(1))
+        buy = coin not in coins_bought and signalvalue == 0.0
         # only buy if the there are no active trades on the coin
-        if buysignal:
+        if buysignal :
             print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
-            if TEST_MODE:
-                orders[coin] = [{
-                    'symbol': coin,
-                    'orderId': 0,
-                    'time': datetime.now().timestamp()
-                }]
+            #if TEST_MODE:
+             #   orders[coin] = [{
+              #      'symbol': coin,
+               #     'orderId': 0,
+                #    'time': datetime.now().timestamp()
+    #            }]
 
-                # Log trade
-                if LOG_TRADES:
-                    write_log(f"Buy : {volume[coin]} {coin} - {last_price[coin]['price']}")
+     #           # Log trade
+      #          if LOG_TRADES:
+       #             write_log(f"Buy : {volume[coin]} {coin} - {last_price[coin]['price']}")
 
-                continue
+        #        continue
 
             # try to create a real order if the test orders did not raise an exception
             try:
@@ -380,7 +461,7 @@ def sell_coins():
         print(f'SMA signal {signalvalue} detected')
         
         
-        sellsignal = signalvalue < 0
+        sellsignal = signalvalue < float(0)
    
         if sellsignal: 
 
@@ -479,11 +560,14 @@ def write_log(logline):
         f.write(timestamp + ' ' + logline + '\n')
 
 if __name__ == '__main__':
-    
+    warnings.filterwarnings("ignore", message="numpy.dtype size changed")
+    warnings.filterwarnings("ignore", message="numpy.ufunc size changed")
     # Load arguments then parse settings
     args = parse_args()
     mymodule = {}
-
+    # set to false at Start
+    global bot_paused
+    bot_paused = False
     DEFAULT_CONFIG_FILE = 'config.yml'
     DEFAULT_CREDS_FILE = 'creds.yml'
 
