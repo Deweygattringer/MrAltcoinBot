@@ -226,7 +226,7 @@ def pause_bot():
 
         # pausing here
         if hsp_head == 1: print(f'Paused...Session profit:{session_profit:.2f}% Est:${(QUANTITY * session_profit)/100:.2f}')
-        time.sleep((TIME_DIFFERENCE * 60) / RECHECK_INTERVAL)
+        time.sleep((TIME_DIFFERENCE * 20) / RECHECK_INTERVAL)
 
     else:
         # stop counting the pause time
