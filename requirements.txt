@@ -5,3 +5,4 @@ tradingview-ta==3.2.3
 telegram-send
 pandas
 matplotlib.pyplot
+# install this with sudo apt-get install libatlas-base-dev
