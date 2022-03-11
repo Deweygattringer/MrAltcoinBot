@@ -62,27 +62,64 @@ class St_ampe_dOut:
 
 sys.stdout = St_ampe_dOut()
 
-# def get_price():
-#     '''Return the current price for all coins on binance'''
+
+
 
     
-#     #prices = client.get_all_tickers()
-#     symbol = client.get_symbol_ticker(symbol='TRXBUSD')
-#     initial_price = symbol['price']
-
-    
-    
-#     return initial_price, symbol
-
-
 def buy():
 
 	
     orders = {}
+    lot_size = {}
+    volume = {}
+    last_price = {}
+    CurrentSymbolPrice = client.get_symbol_ticker(symbol= 'TRXBUSD')
+    Price = CurrentSymbolPrice['price']
+    currentprice = float(Price)
+    currentstring= str(Price)
     
-    # # valid intervals - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
-    
+    #CONVERT VOLUME OF COIN TO BUY
+    for coin in tickers:
+        last_price[coin] = CurrentSymbolPrice
 
+        # Find the correct step size for each coin
+        # max accuracy for TRX for example is 6 decimal points, while XRP just 1.
+        try:
+            info = client.get_symbol_info(coin)
+            step_size = info['filters'][2]['stepSize']
+            lot_size[coin] = step_size.index('1') - 1
+            
+            if lot_size[coin] < 0:
+                lot_size[coin] = 0
+        
+        except:
+            pass
+        # new code x% of free balance
+        free_balance = client.get_asset_balance(asset='BUSD')
+        free = math.floor(float(free_balance['free']) * 0.5)
+        # calculate the volume in coin from QUANTITY in 'PAIRWITH' (default)
+        volume[coin] = float(free / float(Price))
+        
+        # define the volume with the correct step size
+        if coin not in lot_size:
+            volume[coin] = float('{:.1f}'.format(volume[coin]))
+
+        else:
+            # if lot size has 0 decimal points, make the volume an integer
+            if lot_size[coin] == 0:
+                volume[coin] = int(volume[coin])
+            else:
+                volume[coin] = float('{:.{}f}'.format(volume[coin], lot_size[coin]))
+
+
+
+
+
+    # GET HISTORICAL PRICE DATA
+    # # valid intervals - 1m, 3m, 5m, 15m, 30m, 1h, 2h, 4h, 6h, 8h, 12h, 1d, 3d, 1w, 1M
+    avg_price = client.get_avg_price(symbol='TRXBUSD')
+    avg = float(avg_price['price'])
+    
     symbol = 'TRXBUSD'
     starttime = '24 hours ago UTC'  # to start for 1 week ago
     interval = '15m'
@@ -93,66 +130,42 @@ def buy():
     symbol_df = df
 # ultra small time Moving average. 
     symbol_df['ussma'] = symbol_df['close'].rolling(1).mean()
+    ussma = symbol_df.loc[(symbol_df.shape[0]-1), 'ussma']
+    oldussma = symbol_df.loc[(symbol_df.shape[0]-2), 'ussma']
+    veryoldussma = symbol_df.loc[(symbol_df.shape[0]-3), 'ussma']
 # small time Moving average. 
     symbol_df['ssma'] = symbol_df['close'].rolling(3).mean()
+    ssma = symbol_df.loc[(symbol_df.shape[0]-1), 'ssma']
+    oldssma = symbol_df.loc[(symbol_df.shape[0]-2), 'ssma']
+    veryoldssma = symbol_df.loc[(symbol_df.shape[0]-3), 'ssma']
 #medium time Moving average.
     symbol_df['msma'] = symbol_df['close'].rolling(6).mean()
+    msma = symbol_df.loc[(symbol_df.shape[0]-1), 'msma']
+    oldmsma = symbol_df.loc[(symbol_df.shape[0]-2), 'msma']
+    veryoldmsma = symbol_df.loc[(symbol_df.shape[0]-3), 'msma']
 # print in human readable date and time (from timestamp)
     symbol_df.set_index('date', inplace=True)
     symbol_df.index = pd.to_datetime(symbol_df.index, unit='ms')
 # Calculate signal column 
     symbol_df['Signal'] = np.where(symbol_df['ssma'] > symbol_df['msma'], 1, 0) 
+    signal = symbol_df['Signal'].array[-1]
+    signalold = symbol_df['Signal'].array[-2]
 # Calculate position column with diff
     symbol_df['Position'] = symbol_df['Signal'].diff()
-# Add buy and sell columns
+    position = symbol_df['Position'].array[-1]
+    positionold = symbol_df['Position'].array[-2]
+
+# Add buy- and sellprice columns
     symbol_df['Buy'] = np.where(symbol_df['Position'] == 1,symbol_df['close'], np.NaN )
     symbol_df['Sell'] = np.where(symbol_df['Position'] == -1,symbol_df['close'], np.NaN )
-
+    #print(f' s {signal} so{signalold} p {position}po {positionold}')
     with open('output.txt', 'w') as f:
         f.write(
                 symbol_df.to_string()
                )
     
-    CurrentSymbolPrice = client.get_symbol_ticker(symbol= 'TRXBUSD')
-    Price = CurrentSymbolPrice['price']
-    currentprice = float(Price)
-    currentstring= str(Price)
-    free_balance = client.get_asset_balance(asset='BUSD')
-    free = math.floor(float(free_balance['free']) * 0.5)
-            # calculate the volume in coin from QUANTITY in 'PAIRWITH' (default)
-    volume = float(free / float(currentprice))
-            
-            # define the volume with the correct step size
-   
-    volume = float('{:.5f}'.format(volume))
 
-       
-    print(f'volume: {volume}')
-    # track the sma 'interval' ago
-    with open('output.txt', 'r') as file:
-        oldsmafile = file.readlines()
-        oldsmaline = oldsmafile[-2].split()
-        oldssma= float(oldsmaline[-6])
-        oldmsma= float(oldsmaline[-5])
-        positionold = float(oldsmaline[-3])
-        signalold = float(oldsmaline[-4])
-        oldussma = float(oldsmaline[-7])
-        veryoldsmaline = oldsmafile[-3].split()
-        veryoldssma= float(veryoldsmaline[-6])
-        veryoldmsma= float(veryoldsmaline[-5])
-        veryoldussma = float(veryoldsmaline[-7])
-        # track the current sma
-    with open('output.txt' , 'r')as file:
-        outputfile = file.readlines()
-        outputline = outputfile[-1].split()
-        ussma =(float(outputline[-7]))
-        ssma =(float(outputline[-6]))
-        msma = (float(outputline[-5]))
-        signal = float(outputline[-4])
-        position = float(outputline[-3])
-        msmastring = str(msma)   
-        ssmastring = str(ssma)
-  
+
     # pricechanges from very old to old
     #((new-old)/old)*100
     changeoldssma = (((oldssma - veryoldssma)/ veryoldssma)*100)
@@ -164,8 +177,6 @@ def buy():
     changeussma = (((ussma - oldussma)/oldussma)*100)
     
    
-    avg_price = client.get_avg_price(symbol='TRXBUSD')
-    avg = float(avg_price['price'])
     
     
     with open('maxprice.txt', 'r') as file:
@@ -178,47 +189,35 @@ def buy():
             with open('maxprice.txt', 'w') as filehandle:
                 for listitem in currentstring:
                     filehandle.write('%s' % listitem)
-    # track avg:
-    # with open('avg.txt', 'r') as file:
-    #         avgfile = file.readlines()[-1]
-    #         avgline = avgfile.strip('\n').strip(' ')
-    #         oldavg = float(avgline)
-    #         oldavgstring = str(oldavg)
-
-    # if avg != oldavg :
     
-    #         with open('maxprice.txt', 'avg') as filehandle:
-    #             for listitem in currentstring:
-    #                 filehandle.write('%s' % listitem)
     
     print(f'{txcolors.BLUE}SIG: {signal}/ SIG_OLD : {signalold} / POS: {position} /  / POS_OLD: {positionold}{txcolors.DEFAULT}\n ')
     print(f'{txcolors.BLUE}ussma : {ussma}      ssma : {ssma}          msma : {msma}   {txcolors.DEFAULT} \n ')  
     print(f'{txcolors.BLUE}current : {currentprice}      avg : {avg}      maxprice: {maxprice}    {txcolors.DEFAULT} \n  ') 
     print(f'{txcolors.BLUE}ussmachange : {changeussma}   smachng : {changessma}       msmachng : {changemsma}   {txcolors.DEFAULT} \n       ')  
+    print(f'Coin to buy: {coin}\n')
+    print(f'volume: {volume[coin]}\n')
+    print(last_price) 
+    print(f'Buysignal = position is 1.0 and signal is 1 and avg > ssma and ussma > ssma and curr > avg and ussma > oldussma and ssma > oldssma:\n{buysignal}\n ')
+    print(f'Buysignal2 = positionold is 0.0 and signalold is 1 and signal is 1 and avg > ssma and ussma > ssma and curr > avg and ussma > oldussma and ssma > oldssma: \n{buysignal2}\n ')
+    
     
     for coin in tickers:
-        print(f'Coin to buy: {coin}\n')
-        print(f'volume: {volume}\n')
         
-        buysignal = (coin not in coins_bought and position == 1.0 and signal == 1.0 and avg > ussma and ussma > ssma and currentprice > avg and ussma > oldussma and ssma > oldssma)
+        buysignal = (coin not in coins_bought and position == 1.0 and signal == 1 and avg > ssma and ussma > ssma  and ussma > oldussma * 1.0003 and ssma > oldssma)
 
-        buysignal2 = (coin not in coins_bought and positionold == 0.0 and signalold == 1.0 and signal == 1.0  and avg > ussma and ussma > ssma and currentprice > avg and ussma > oldussma and ssma > oldssma )
-        
-        
-        print(f'Buysignal = position is 1.0 and signal is 1.0 and avg > ussma and ussma > ssma and curr > avg and ussma > oldussma and ssma > oldssma:\n{buysignal}\n ')
-        
-        print(f'Buysignal2 = positionold is 0.0 and signalold is 1.0 and signal is 1.0 and avg > ussma and ussma > ssma and curr > avg and ussma > oldussma and ssma > oldssma: \n{buysignal2}\n ')
-        
+        buysignal2 = (coin not in coins_bought and positionold == 0.0 and signalold == 1 and signal == 1  and avg > ssma and ussma > ssma  and ussma > oldussma * 1.0003 and ssma > oldssma )
+
         # only buy if the there are no active trades on the coin
         if buysignal:
-            print(f"{txcolors.BUY}Preparing to buy {volume} {coin}{txcolors.DEFAULT}")
+            print(f"{txcolors.BUY}Preparing to buy {[coin]} {coin}{txcolors.DEFAULT}")
 
             try:
                 buy_limit = client.create_order(
                     symbol = coin,
                     side = 'BUY',
                     type = 'MARKET',
-                    quantity = volume
+                    quantity = volume[coin]
                 )
 
             # error handling here in case position cannot be placed
@@ -241,7 +240,7 @@ def buy():
                     
                     #    Log trade
                     if LOG_TRADES:
-                        write_log(f"lowbot just bought position=1: {volume} {coin} @ {currentprice}")
+                        write_log(f"lowbot just bought position=1: {volume[coin]} {coin} @ {currentprice}")
                         
                         #read tradelog and send buy info on telegram
                         with open('trades.txt', 'r') as file:
@@ -254,14 +253,14 @@ def buy():
                                 filehandle.write('%s' % listitem)
                         
         elif buysignal2:
-            print(f"{txcolors.BUY}Preparing to buy {volume} {coin}{txcolors.DEFAULT}")
+            print(f"{txcolors.BUY}Preparing to buy {volume[coin]} {coin}{txcolors.DEFAULT}")
 
             try:
                 buy_limit = client.create_order(
                     symbol = coin,
                     side = 'BUY',
                     type = 'MARKET',
-                    quantity = volume
+                    quantity = volume[coin]
                 )
 
             # error handling here in case position cannot be placed
@@ -284,7 +283,7 @@ def buy():
                     
                     #    Log trade
                     if LOG_TRADES:
-                        write_log(f"lowbot just bought position 0, signal 1: {volume} {coin} @ {currentprice}")
+                        write_log(f"lowbot just bought position 0, signal 1: {volume[coin]} {coin} @ {currentprice}")
                         
                         #read tradelog and send buy info on telegram
                         with open('trades.txt', 'r') as file:
@@ -305,7 +304,7 @@ def buy():
         else:
             print(f'Buy parameters not yet met')
 
-    return orders,  volume
+    return orders,  volume, last_price
 
 def sell_coins():
     '''sell coins that have reached the STOP LOSS or TAKE PROFIT threshold'''
@@ -314,6 +313,9 @@ def sell_coins():
 
     coins_sold = {}
     
+ 
+
+
     for coin in list(coins_bought):
         CurrentSymbolPrice = client.get_symbol_ticker(symbol= 'TRXBUSD')
         Price = CurrentSymbolPrice['price']
@@ -496,7 +498,7 @@ def update_portfolio(orders, last_price):
             'orderid': orders[coin][0]['orderId'],
             'timestamp': orders[coin][0]['time'],
             'bought_at': last_price[coin]['price'],
-            'volume': volume,
+            'volume': volume[coin],
             }
 
         # save the coins in a json file in the same directory
@@ -605,8 +607,8 @@ if __name__ == '__main__':
     while True:
         try:
             
-            orders, volume = buy()
-            update_portfolio(orders, volume)
+            orders, volume, last_price = buy()
+            update_portfolio(orders, volume,)
             
             coins_sold = sell_coins()
             remove_from_portfolio(coins_sold)
