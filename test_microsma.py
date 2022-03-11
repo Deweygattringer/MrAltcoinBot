@@ -198,8 +198,6 @@ def buy():
     print(f'Coin to buy: {coin}\n')
     print(f'volume: {volume[coin]}\n')
     print(last_price) 
-    print(f'Buysignal = position is 1.0 and signal is 1 and avg > ssma and ussma > ssma and curr > avg and ussma > oldussma and ssma > oldssma:\n{buysignal}\n ')
-    print(f'Buysignal2 = positionold is 0.0 and signalold is 1 and signal is 1 and avg > ssma and ussma > ssma and curr > avg and ussma > oldussma and ssma > oldssma: \n{buysignal2}\n ')
     
     
     for coin in tickers:
@@ -207,7 +205,9 @@ def buy():
         buysignal = (coin not in coins_bought and position == 1.0 and signal == 1 and avg > ssma and ussma > ssma  and ussma > oldussma * 1.0003 and ssma > oldssma)
 
         buysignal2 = (coin not in coins_bought and positionold == 0.0 and signalold == 1 and signal == 1  and avg > ssma and ussma > ssma  and ussma > oldussma * 1.0003 and ssma > oldssma )
-
+        print(f'Buysignal = position is 1.0 and signal is 1 and avg > ssma and ussma > ssma and curr > avg and ussma > oldussma and ssma > oldssma:\n{buysignal}\n ')
+        print(f'Buysignal2 = positionold is 0.0 and signalold is 1 and signal is 1 and avg > ssma and ussma > ssma and curr > avg and ussma > oldussma and ssma > oldssma: \n{buysignal2}\n ')
+    
         # only buy if the there are no active trades on the coin
         if buysignal:
             print(f"{txcolors.BUY}Preparing to buy {[coin]} {coin}{txcolors.DEFAULT}")
